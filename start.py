@@ -56,8 +56,9 @@ def main():
 
     # 4. Start the background live automated scraper thread!
     from pipeline.live_feed import start_live_feed
-    start_live_feed(interval_sec=12.0)
-    logger.info("[LIVE ENGINE] Real-time background scraper launched! Ingesting live flights every 12s...")
+    interval = float(os.getenv("SCRAPE_INTERVAL_SEC", "45.0"))
+    start_live_feed(interval_sec=interval)
+    logger.info(f"[LIVE ENGINE] Polite background scraper active (cycle: {interval}s with deduplication & FIFO storage cap).")
 
     # 5. Start Uvicorn Server serving React Dashboard + APIs
     logger.info("[SERVER] Launching FastAPI + React Dashboard on http://127.0.0.1:8000 ...")

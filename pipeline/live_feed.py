@@ -62,11 +62,16 @@ def scrape_single_flight(site: str = None, route: str = None, window: str = None
     validated = detect_batch_anomalies([norm])
     final_fare = validated[0]
 
-    # 1. Save to CSV snapshot
+    # Check deduplication: skip redundant writing if exact fare was captured within last 1 hour
+    if is_duplicate(final_fare, window_seconds=3600.0):
+        logger.debug(f"[LIVE SCRAPER] Skipped duplicate unchanged fare: {final_fare.route} {final_fare.flight_number} (Price: INR {final_fare.price_inr:,.2f})")
+        return final_fare
+
+    # 1. Save to CSV snapshot (with automatic FIFO cap & base month protection)
     store = SnapshotStore()
     store.save([final_fare])
 
-    # 2. Save to PostgreSQL DB
+    # 2. Save to PostgreSQL DB (with rolling 60-day auto-prune)
     db = DatabaseStore()
     if db.is_connected:
         db.insert_fares([final_fare])
@@ -83,9 +88,9 @@ def scrape_single_flight(site: str = None, route: str = None, window: str = None
     return final_fare
 
 
-def _live_feed_worker(interval_sec: float = 12.0):
+def _live_feed_worker(interval_sec: float = 45.0):
     global _running
-    logger.info(f"[LIVE SCRAPER DAEMON] Started real-time background scraper (cycle: every {interval_sec}s)...")
+    logger.info(f"[LIVE SCRAPER DAEMON] Started real-time background scraper (polite cycle: every {interval_sec}s)...")
     while _running:
         try:
             scrape_single_flight()
@@ -94,7 +99,7 @@ def _live_feed_worker(interval_sec: float = 12.0):
         time.sleep(interval_sec)
 
 
-def start_live_feed(interval_sec: float = 12.0):
+def start_live_feed(interval_sec: float = 45.0):
     """Starts background scraper thread."""
     global _running, _thread
     if _running:

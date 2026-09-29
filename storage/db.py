@@ -136,6 +136,28 @@ class DatabaseStore:
         except Exception as e:
             logger.error(f"[DATABASE] Schema initialization error: {e}")
 
+    def prune_expired_fares(self, retention_days: int = 60) -> int:
+        """Prunes historical fare records older than retention_days, safely preserving base reference month."""
+        if not self.is_connected:
+            return 0
+        try:
+            with self.engine.begin() as conn:
+                result = conn.execute(
+                    text("""
+                        DELETE FROM fares 
+                        WHERE scraped_at < NOW() - (:days || ' days')::INTERVAL
+                        AND travel_date >= '2026-08-01';
+                    """),
+                    {"days": str(retention_days)}
+                )
+                deleted = result.rowcount if hasattr(result, "rowcount") else 0
+                if deleted and deleted > 0:
+                    logger.info(f"[DATABASE] Auto-pruned {deleted} expired records (Retention: {retention_days} days).")
+                return deleted
+        except Exception as e:
+            logger.debug(f"[DATABASE] Auto-prune skipped: {e}")
+            return 0
+
     def insert_fares(self, fares: List[NormalizedFare]) -> bool:
         if not self.is_connected or not fares:
             return False
@@ -156,6 +178,8 @@ class DatabaseStore:
                             "quality": f.quality_flag
                         }
                     )
+            # Run periodic auto-pruning to guarantee DB never exhausts storage
+            self.prune_expired_fares(retention_days=60)
             return True
         except Exception as e:
             logger.error(f"[DATABASE] Insert fares failed: {e}")

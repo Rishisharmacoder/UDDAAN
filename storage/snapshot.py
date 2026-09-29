@@ -1,4 +1,4 @@
-"""CSV Snapshot storage: fallback layer ensuring resilient offline operation."""
+"""CSV Snapshot storage: fallback layer ensuring resilient offline operation with FIFO circular retention."""
 import io
 import os
 import pandas as pd
@@ -15,39 +15,74 @@ CSV_COLUMNS = [
     "scraped_at", "quality_flag"
 ]
 
+# Maximum rows retained in snapshot.csv to prevent disk exhaustion (keeps file size bounded ~1 MB)
+MAX_SNAPSHOT_ROWS = int(os.getenv("MAX_SNAPSHOT_ROWS", "6500"))
+BASE_REFERENCE_MONTH = "2026-07"
+
 
 class SnapshotStore:
-    """Manages CSV snapshot reading, appending, and exporting."""
+    """Manages CSV snapshot reading, appending, deduplication, and FIFO circular buffer retention."""
 
     def __init__(self, file_path: str = SNAPSHOT_PATH):
         self.file_path = file_path
         os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
 
     def save(self, fares: List[NormalizedFare]) -> None:
-        """Appends list of normalized fares to snapshot CSV."""
+        """Appends list of normalized fares to snapshot CSV with automatic FIFO cap and deduplication."""
         if not fares:
             return
 
-        records = [f.to_dict() for f in fares]
-        df = pd.DataFrame(records)
+        new_records = [f.to_dict() for f in fares]
+        new_df = pd.DataFrame(new_records)
 
-        # Select only required columns
+        # Ensure all required columns exist
         for col in CSV_COLUMNS:
-            if col not in df.columns:
-                df[col] = ""
-        df = df[CSV_COLUMNS]
+            if col not in new_df.columns:
+                new_df[col] = ""
+        new_df = new_df[CSV_COLUMNS]
 
         try:
-            file_exists = os.path.exists(self.file_path)
-            df.to_csv(self.file_path, mode="a" if file_exists else "w", header=not file_exists, index=False)
-            logger.info(f"[SNAPSHOT] Appended {len(fares)} rows into {self.file_path}")
+            if os.path.exists(self.file_path):
+                existing_df = self._read_cleaned_df()
+                if not existing_df.empty:
+                    # Concat existing and new
+                    combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+
+                    # Deduplicate exact identical consecutive entries
+                    combined_df.drop_duplicates(
+                        subset=["route", "flight_number", "travel_date", "window", "price_inr", "source"],
+                        keep="last",
+                        inplace=True
+                    )
+
+                    # FIFO Retention Policy:
+                    # 1. Always protect the base reference month (2026-07) so base basket V0 remains invariant
+                    base_mask = combined_df["travel_date"].astype(str).str.startswith(BASE_REFERENCE_MONTH)
+                    base_df = combined_df[base_mask]
+                    rolling_df = combined_df[~base_mask]
+
+                    # 2. Keep only the latest (MAX_SNAPSHOT_ROWS - len(base_df)) rows in rolling window
+                    max_rolling = max(1000, MAX_SNAPSHOT_ROWS - len(base_df))
+                    if len(rolling_df) > max_rolling:
+                        rolling_df = rolling_df.tail(max_rolling)
+
+                    final_df = pd.concat([base_df, rolling_df], ignore_index=True)
+                else:
+                    final_df = new_df
+            else:
+                final_df = new_df
+
+            # Write cleanly to snapshot file
+            final_df.to_csv(self.file_path, index=False)
+            logger.info(f"[SNAPSHOT] Stored {len(fares)} new fares. Snapshot strictly bounded at {len(final_df)} rows (FIFO Cap: {MAX_SNAPSHOT_ROWS}).")
+
         except PermissionError:
-            logger.warning(f"[SNAPSHOT] Cannot write to {self.file_path} because it is open in another program (e.g. Excel). Data was safely saved to PostgreSQL.")
+            logger.warning(f"[SNAPSHOT] Cannot write to {self.file_path} (open in another program). Appending deferred.")
         except Exception as e:
             logger.error(f"[SNAPSHOT] Error saving snapshot: {e}")
 
     def _read_cleaned_df(self) -> pd.DataFrame:
-        """Reads CSV filtering out any leading SQL comments like '-- Active:' while keeping hyphens in data."""
+        """Reads CSV filtering out any leading SQL comments while keeping hyphens in data."""
         if not os.path.exists(self.file_path):
             return pd.DataFrame(columns=CSV_COLUMNS)
         try:
@@ -106,7 +141,7 @@ class SnapshotStore:
                     quality_flag=str(row.get("quality_flag", "ok"))
                 )
                 fares.append(f)
-            except Exception as err:
+            except Exception:
                 continue
         return fares
 
