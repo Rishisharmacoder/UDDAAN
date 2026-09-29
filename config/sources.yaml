@@ -1,0 +1,100 @@
+# All 11 Problem Statement Portals - Channel & Status Map
+sources:
+  - id: "indigo"
+    name: "IndiGo"
+    type: "airline"
+    channel: "scraper"
+    enabled: true
+    phase: 1
+    notes: "Proven undetected-chromedriver stealth scraper (Akamai safe)"
+    weight: 0.70
+
+  - id: "makemytrip"
+    name: "MakeMyTrip"
+    type: "ota"
+    channel: "scraper"
+    enabled: true
+    phase: 1
+    notes: "Proven stealth scraper on react listing cards"
+    weight: 0.30
+
+  - id: "amadeus"
+    name: "Amadeus GDS"
+    type: "gds"
+    channel: "api"
+    enabled: true
+    phase: 1
+    notes: "Official GDS API flight-offers endpoint (INR, full coverage)"
+    weight: 0.70
+
+  - id: "airindia"
+    name: "Air India"
+    type: "airline"
+    channel: "api"
+    enabled: false
+    phase: 2
+    notes: "NDC Portal application (ndc.airindia.com) - Direct WAF bypass avoided"
+    weight: 0.70
+
+  - id: "cleartrip"
+    name: "Cleartrip"
+    type: "ota"
+    channel: "api"
+    enabled: false
+    phase: 2
+    notes: "Partner API application - Direct WAF 403 bypass avoided"
+    weight: 0.30
+
+  - id: "easemytrip"
+    name: "EaseMyTrip"
+    type: "ota"
+    channel: "skip"
+    enabled: false
+    phase: 0
+    notes: "SKIPPED: robots.txt disallows /flight-search/listing* (Compliance principle)"
+    weight: 0.0
+
+  - id: "ixigo"
+    name: "Ixigo"
+    type: "ota"
+    channel: "skip"
+    enabled: false
+    phase: 0
+    notes: "SKIPPED: Explicit 403 Bot-wall access denied"
+    weight: 0.0
+
+  - id: "akasaair"
+    name: "Akasa Air"
+    type: "airline"
+    channel: "skip"
+    enabled: false
+    phase: 0
+    notes: "SKIPPED: Hard WAF block - covered via GDS aggregate"
+    weight: 0.0
+
+  - id: "spicejet"
+    name: "SpiceJet"
+    type: "airline"
+    channel: "scraper"
+    enabled: false
+    phase: 3
+    notes: "Phase 3 probe - bot-specific rules verification pending"
+    weight: 0.50
+
+  - id: "goibibo"
+    name: "Goibibo"
+    type: "ota"
+    channel: "scraper"
+    enabled: false
+    phase: 3
+    notes: "Phase 3 generic OTA adapter evaluation"
+    weight: 0.30
+
+  - id: "yatra"
+    name: "Yatra"
+    type: "ota"
+    channel: "scraper"
+    enabled: false
+    phase: 3
+    notes: "Phase 3 generic OTA adapter evaluation"
+    weight: 0.30

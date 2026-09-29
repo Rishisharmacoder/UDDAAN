@@ -1,0 +1,22 @@
+# 5 Advance Purchase Booking Windows
+windows:
+  - label: "T+1"
+    days_ahead: 1
+    enabled: true
+    description: "Next-day urgent travel"
+  - label: "T+7"
+    days_ahead: 7
+    enabled: true
+    description: "One week advance booking"
+  - label: "T+15"
+    days_ahead: 15
+    enabled: true
+    description: "Two weeks advance planning"
+  - label: "T+30"
+    days_ahead: 30
+    enabled: true
+    description: "One month advance booking"
+  - label: "T+45"
+    days_ahead: 45
+    enabled: true
+    description: "Long range / planned seasonal booking"

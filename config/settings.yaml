@@ -1,0 +1,44 @@
+# Global Platform Settings & Crawl Budget
+rate_limit:
+  min_gap_sec: 45
+  max_req_per_hour: 15
+  blocked_cooldown_hours: 24
+
+proxy:
+  max_live_proxies: 10
+  validation_timeout_sec: 5
+  rotation_strategy: "per_domain"
+
+browser:
+  headless: true
+  page_load_timeout: 45
+  element_wait_timeout: 20
+
+weights:
+  airline_source: 0.70
+  ota_source: 0.30
+
+schedule:
+  morning_sweep_cron: "0 6 * * *"       # 06:00 IST
+  evening_sweep_cron: "0 18 * * *"      # 18:00 IST
+  daily_index_cron: "0 21 * * *"        # 21:00 IST
+  weekly_index_cron: "0 22 * * 0"       # Sunday 22:00 IST
+  monthly_index_cron: "0 1 1 * *"       # 1st of month 01:00 IST
+  health_ping_interval_min: 30
+
+anomaly:
+  mad_z_threshold: 3.0
+  price_min_valid_inr: 500
+  price_max_valid_inr: 100000
+
+index:
+  base_month: "2026-07"
+  base_index_value: 100.0
+  expected_base_basket_value: 178047.79
+
+provenance:
+  enforce_strict_provenance: true
+  fallback_chain:
+    - "amadeus"
+    - "snapshot"
+    - "seed"

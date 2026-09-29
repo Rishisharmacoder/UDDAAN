@@ -1,0 +1,32 @@
+# 6 Official DGCA Representative High-Density Domestic City-Pairs
+routes:
+  - origin: "DEL"
+    destination: "BOM"
+    enabled: true
+    dgca_rank: 1
+    description: "Delhi to Mumbai"
+  - origin: "DEL"
+    destination: "BLR"
+    enabled: true
+    dgca_rank: 2
+    description: "Delhi to Bengaluru"
+  - origin: "BOM"
+    destination: "BLR"
+    enabled: true
+    dgca_rank: 3
+    description: "Mumbai to Bengaluru"
+  - origin: "DEL"
+    destination: "CCU"
+    enabled: true
+    dgca_rank: 4
+    description: "Delhi to Kolkata"
+  - origin: "BLR"
+    destination: "HYD"
+    enabled: true
+    dgca_rank: 5
+    description: "Bengaluru to Hyderabad"
+  - origin: "MAA"
+    destination: "DEL"
+    enabled: true
+    dgca_rank: 6
+    description: "Chennai to Delhi"
