@@ -61,8 +61,10 @@ def main():
     logger.info(f"[LIVE ENGINE] Polite background scraper active (cycle: {interval}s with deduplication & FIFO storage cap).")
 
     # 5. Start Uvicorn Server serving React Dashboard + APIs
-    logger.info("[SERVER] Launching FastAPI + React Dashboard on http://127.0.0.1:8000 ...")
-    uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=False)
+    port = int(os.getenv("PORT", os.getenv("API_PORT", "8000")))
+    host = os.getenv("API_HOST", "0.0.0.0")
+    logger.info(f"[SERVER] Launching FastAPI + React Dashboard on http://{host}:{port} ...")
+    uvicorn.run("api.main:app", host=host, port=port, reload=False)
 
 
 if __name__ == "__main__":

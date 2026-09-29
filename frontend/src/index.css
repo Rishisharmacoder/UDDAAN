@@ -1377,3 +1377,308 @@ body {
   color: #0284c7;
   border: 1px solid #bae6fd;
 }
+
+/* ==========================================================
+   MASTER FULL-DEVICE RESPONSIVE ENGINE (MOBILE / TABLET / DESKTOP)
+   ========================================================== */
+
+/* 1. Large Screens & Desktops (> 1200px) */
+@media (min-width: 1201px) {
+  .content-wrapper {
+    max-width: 1240px;
+    padding: 0 24px;
+  }
+}
+
+/* 2. Laptops & Small Desktops (1025px - 1200px) */
+@media (max-width: 1200px) {
+  .content-wrapper {
+    padding: 0 20px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* 3. Tablets Landscape & Medium Screens (769px - 1024px) */
+@media (max-width: 1024px) {
+  .grid-2col {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .services-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .deal-split {
+    grid-template-columns: 1fr !important;
+  }
+  .hero-backdrop-aircraft {
+    opacity: 0.16;
+    right: -100px;
+    width: 500px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* 4. Tablets Portrait & Large Mobiles (481px - 768px) */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 0 16px !important;
+  }
+  .navbar-wrapper {
+    position: sticky;
+    top: 0;
+  }
+  .navbar {
+    height: 64px !important;
+  }
+  .nav-menu {
+    display: none !important;
+  }
+  .brand-title {
+    font-size: 21px !important;
+  }
+  .hero-section {
+    padding: 36px 0 76px 0 !important;
+  }
+  .hero-title {
+    font-size: clamp(26px, 6vw, 36px) !important;
+    margin-bottom: 8px !important;
+  }
+  .hero-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 24px !important;
+  }
+  .search-card-float {
+    margin-top: -36px !important;
+    padding: 14px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    border-radius: 16px !important;
+  }
+  .search-field {
+    width: 100% !important;
+    min-width: 100% !important;
+    padding: 9px 12px !important;
+  }
+  .swap-btn {
+    align-self: center !important;
+    margin: -4px 0 !important;
+    transform: rotate(90deg) !important;
+  }
+  .search-action-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 12px 20px !important;
+    font-size: 15px !important;
+    height: 48px !important;
+  }
+  .deal-split {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .deal-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .deal-title {
+    font-size: 18px !important;
+  }
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .card-white, .dash-card {
+    padding: 18px 16px !important;
+    border-radius: 14px !important;
+  }
+  .card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .card-header > div:last-child {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .btn-toggle-group {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+  .toggle-btn {
+    flex: 1 !important;
+    text-align: center !important;
+  }
+  .trend-stats-row {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+  }
+  .footer-top {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 20px !important;
+  }
+  .footer-stats-row {
+    width: 100% !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+  }
+  .footer-bottom {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 8px !important;
+    font-size: 11px !important;
+  }
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* 5. Mobile Small & Compact Phones (<= 480px) */
+@media (max-width: 480px) {
+  .content-wrapper {
+    padding: 0 12px !important;
+  }
+  .brand-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+  .brand-title {
+    font-size: 19px !important;
+  }
+  .brand-sub {
+    font-size: 9px !important;
+  }
+  .nav-badge-pill {
+    display: none !important;
+  }
+  .btn-nav-scrape span,
+  .btn-nav-refresh span,
+  .btn-nav-docs span {
+    display: none !important;
+  }
+  .btn-nav-scrape,
+  .btn-nav-refresh,
+  .btn-nav-docs {
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+  }
+  .hero-section {
+    padding: 28px 0 62px 0 !important;
+  }
+  .hero-title {
+    font-size: 23px !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.4px !important;
+  }
+  .hero-subtitle {
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+    margin-bottom: 18px !important;
+  }
+  .search-card-float {
+    margin-top: -24px !important;
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+  .price-main {
+    font-size: 25px !important;
+  }
+  .price-box {
+    padding: 14px !important;
+  }
+  .btn-book-green {
+    padding: 10px !important;
+    font-size: 13px !important;
+  }
+  .segment-item {
+    padding: 12px !important;
+  }
+  .path-col {
+    padding: 0 6px !important;
+  }
+  .path-duration {
+    font-size: 10px !important;
+  }
+  .path-stops {
+    font-size: 9px !important;
+  }
+  .time-val {
+    font-size: 15px !important;
+  }
+  .airport-code {
+    font-size: 11px !important;
+  }
+  .city-name {
+    font-size: 10px !important;
+  }
+  .platform-row {
+    padding: 10px 0 !important;
+  }
+  .platform-name {
+    font-size: 12px !important;
+  }
+  .platform-price {
+    font-size: 13px !important;
+  }
+  .btn-book-blue {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+  }
+  .trend-stats-row {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+  .trend-stat-box {
+    padding: 10px 12px !important;
+  }
+  .services-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .kpi-card {
+    padding: 16px !important;
+  }
+  .kpi-value {
+    font-size: 24px !important;
+  }
+  .section-main-heading {
+    font-size: 20px !important;
+  }
+  .section-sub-heading {
+    font-size: 13px !important;
+  }
+  .footer-stats-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .footer-bottom {
+    font-size: 10px !important;
+  }
+  .select-custom {
+    width: 100% !important;
+  }
+  .btn-live-scrape, .btn-export-csv {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
