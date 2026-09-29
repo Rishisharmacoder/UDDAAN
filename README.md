@@ -1,7 +1,7 @@
 # ✈️ UDDAAN (APIx) — Real-Time Airfare Price Index & Aviation Intelligence Platform
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Smart%20India%20Hackathon%202026-Grand%20Finale%20Edition-0077ff?style=for-the-badge&logo=gov.in" alt="SIH 2026" />
+  <img src="https://img.shields.io/badge/Smart%20India%20Hackathon%202026-Official%20Submission-0077ff?style=for-the-badge&logo=gov.in" alt="SIH 2026" />
   <img src="https://img.shields.io/badge/Problem%20Statement-SIH26056-00a86b?style=for-the-badge" alt="Problem Statement ID" />
   <img src="https://img.shields.io/badge/Ministry-MoSPI%20%7C%20DIID-0b1a38?style=for-the-badge" alt="MoSPI DIID" />
   <img src="https://img.shields.io/badge/Verification-100%25%20DGCA%20Non--Stop-10b981?style=for-the-badge" alt="DGCA Verified" />
@@ -336,12 +336,12 @@ d:/UDAAN/
 ├── docker-compose.yml          # Production Container Stack
 ├── requirements.txt            # Python Dependencies
 ├── start.py                    # Unified Platform Startup Script
-└── README.md                   # Grand Finale Technical Documentation
+└── README.md                   # Technical Documentation & System Guide
 ```
 
 ---
 
-## 🏆 Smart India Hackathon Grand Finale Checklist
+## 🏆 Smart India Hackathon Requirements & Verification Checklist
 
 - [x] **Problem Statement SIH26056 Addressed:** High-frequency airfare intelligence for MoSPI CPI transport sub-group.
 - [x] **Econometric Precision:** Strict Laspeyres fixed-basket weighting ($V_0 = ₹187,707.17$) with daily, weekly, and monthly series.
