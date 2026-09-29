@@ -1682,3 +1682,80 @@ body {
     justify-content: center !important;
   }
 }
+
+/* ==========================================================
+   MOBILE SCROLL HINT & APP-LIKE NAVIGATION STRIP
+   ========================================================== */
+.mobile-scroll-hint {
+  display: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0077ff;
+  background: #eff6ff;
+  border: 1px dashed #bfdbfe;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.mobile-nav-bar {
+  display: none;
+}
+
+.nav-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .mobile-scroll-hint {
+    display: block;
+  }
+  .mobile-nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #071228;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .mobile-nav-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-nav-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .mobile-nav-pill:hover,
+  .mobile-nav-pill:active {
+    background: #0077ff;
+    color: #ffffff;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-btn-text {
+    display: none !important;
+  }
+  .nav-actions-right {
+    gap: 6px;
+  }
+}
+

@@ -39,7 +39,12 @@ export default function SourcesHealthTable({ sources }) {
         </div>
       </div>
 
-      <div className="table-responsive" style={{ marginTop: '16px' }}>
+      {/* Mobile Swipe Hint */}
+      <div className="mobile-scroll-hint">
+        <span>⇄ Swipe table horizontally to view all 11 portals</span>
+      </div>
+
+      <div className="table-responsive" style={{ marginTop: '12px' }}>
         <table className="apix-table">
           <thead>
             <tr>

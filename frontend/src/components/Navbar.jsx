@@ -23,7 +23,7 @@ export default function Navbar({
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Desktop Navigation Links */}
           <ul className="nav-menu">
             <li><a className="nav-link active" href="#flights">Flights</a></li>
             <li><a className="nav-link" href="#tracker">Price Tracker</a></li>
@@ -33,7 +33,7 @@ export default function Navbar({
           </ul>
 
           {/* Right Action Controls: Scrape, Refresh, API Docs & Feed Pill (NO Login/Sign Up) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="nav-actions-right">
             {/* Live Feed Status */}
             <div className="nav-badge-pill" title="Verified Real Web Ingestion">
               <span className="nav-pulse-dot" />
@@ -49,7 +49,7 @@ export default function Navbar({
                 title="Trigger immediate live web scraper for current corridor"
               >
                 <Zap size={14} className={scraping ? 'spin-icon' : ''} />
-                <span>{scraping ? 'Scraping...' : '⚡ Scrape Live'}</span>
+                <span className="nav-btn-text">{scraping ? 'Scraping...' : '⚡ Scrape Live'}</span>
               </button>
             )}
 
@@ -62,7 +62,7 @@ export default function Navbar({
                 title="Refresh All Index & Corridor Metrics"
               >
                 <RefreshCw size={14} className={loading ? 'spin-icon' : ''} />
-                <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
+                <span className="nav-btn-text">{loading ? 'Refreshing...' : 'Refresh'}</span>
               </button>
             )}
 
@@ -75,10 +75,20 @@ export default function Navbar({
               title="Open OpenAPI / Swagger Documentation"
             >
               <ExternalLink size={14} />
-              <span>Docs</span>
+              <span className="nav-btn-text">Docs</span>
             </a>
           </div>
         </nav>
+      </div>
+
+      {/* Mobile-Friendly Navigation Strip (Auto-visible on mobile and tablet) */}
+      <div className="mobile-nav-bar">
+        <a href="#flights" className="mobile-nav-pill">✈️ Flights</a>
+        <a href="#deals" className="mobile-nav-pill">🏷️ Best Deals</a>
+        <a href="#tracker" className="mobile-nav-pill">📈 Price Trend</a>
+        <a href="#apix-index" className="mobile-nav-pill">🏛️ MoSPI Index</a>
+        <a href="#audit-stream" className="mobile-nav-pill">⚡ Live Audit</a>
+        <a href="#portal-health" className="mobile-nav-pill">🛡️ Health</a>
       </div>
     </header>
   );

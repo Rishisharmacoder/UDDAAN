@@ -94,7 +94,12 @@ export default function RecentFaresTable({
         </div>
       </div>
 
-      <div className="table-responsive" style={{ marginTop: '16px' }}>
+      {/* Mobile Swipe Hint */}
+      <div className="mobile-scroll-hint">
+        <span>⇄ Swipe table horizontally to view full audit trail</span>
+      </div>
+
+      <div className="table-responsive" style={{ marginTop: '12px' }}>
         <table className="apix-table">
           <thead>
             <tr>
