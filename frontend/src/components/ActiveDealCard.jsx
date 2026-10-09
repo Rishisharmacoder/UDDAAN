@@ -10,11 +10,19 @@ export default function ActiveDealCard({ routeData, onBookNow }) {
     destination,
     dest_city,
     current_lowest_price,
+    total_price,
+    passengers,
+    cabin,
+    depart_date_display,
+    return_date_display,
     was_price,
     discount_pct,
     flight_depart,
     flight_return
   } = routeData;
+
+  const paxCount = passengers || 1;
+  const cabinClass = cabin || 'Economy';
 
   return (
     <div className="card-white" id="tracker">
@@ -25,7 +33,7 @@ export default function ActiveDealCard({ routeData, onBookNow }) {
             {origin_city} ({origin}) → {dest_city} ({destination})
           </h2>
           <div className="deal-meta">
-            Round Trip • 15 May 2025 – 18 May 2025 • 1 Passenger • Economy
+            Round Trip • {depart_date_display || 'Upcoming'} – {return_date_display || 'Return'} • {paxCount} Passenger{paxCount > 1 ? 's' : ''} • {cabinClass}
           </div>
         </div>
         <span className="badge-best-price">Best Price Right Now</span>
@@ -36,13 +44,18 @@ export default function ActiveDealCard({ routeData, onBookNow }) {
         {/* Left: Price Box */}
         <div className="price-box">
           <div>
-            <span className="price-box-label">Current Lowest Price</span>
+            <span className="price-box-label">Current Lowest Price {paxCount > 1 ? '(per person)' : ''}</span>
             <div className="price-main">
               <span>₹ {current_lowest_price?.toLocaleString()}</span>
               <span className="price-discount-tag">
                 <ArrowDown size={14} /> {discount_pct || 12}%
               </span>
             </div>
+            {paxCount > 1 && (
+              <div style={{ fontSize: '12px', color: '#0284c7', fontWeight: 600, marginTop: '2px' }}>
+                Total: ₹ {total_price?.toLocaleString()} ({paxCount} travellers)
+              </div>
+            )}
             <div className="price-was">
               (was ₹ {was_price?.toLocaleString() || (current_lowest_price * 1.15).toFixed(0)})
             </div>
@@ -76,7 +89,7 @@ export default function ActiveDealCard({ routeData, onBookNow }) {
                   </div>
                 </div>
               </div>
-              <span className="segment-date-tag">Depart 15 May 2025</span>
+              <span className="segment-date-tag">Depart {flight_depart?.depart_date_display || depart_date_display}</span>
             </div>
 
             <div className="timeline-row">
@@ -116,7 +129,7 @@ export default function ActiveDealCard({ routeData, onBookNow }) {
                   </div>
                 </div>
               </div>
-              <span className="segment-date-tag">Return 18 May 2025</span>
+              <span className="segment-date-tag">Return {flight_return?.return_date_display || return_date_display}</span>
             </div>
 
             <div className="timeline-row">

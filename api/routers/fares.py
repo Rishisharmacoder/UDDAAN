@@ -1,8 +1,8 @@
-"""Fares and Summary API router."""
 import io
 import os
 import yaml
 import pandas as pd
+from datetime import datetime, timezone, timedelta, date
 from fastapi import APIRouter, Query, HTTPException
 from fastapi.responses import StreamingResponse
 from typing import Optional, List, Dict, Any
@@ -226,8 +226,31 @@ CITY_NAMES = {
 }
 
 
+
+ROUTE_TIMINGS = {
+    "DEL-BOM": {"depart": "08:20", "arrive": "10:30", "duration": "2h 10m", "ret_depart": "11:25", "ret_arrive": "13:30", "ret_duration": "2h 05m"},
+    "BOM-DEL": {"depart": "11:25", "arrive": "13:30", "duration": "2h 05m", "ret_depart": "08:20", "ret_arrive": "10:30", "ret_duration": "2h 10m"},
+    "DEL-BLR": {"depart": "07:15", "arrive": "10:00", "duration": "2h 45m", "ret_depart": "10:45", "ret_arrive": "13:30", "ret_duration": "2h 45m"},
+    "BLR-DEL": {"depart": "10:45", "arrive": "13:30", "duration": "2h 45m", "ret_depart": "07:15", "ret_arrive": "10:00", "ret_duration": "2h 45m"},
+    "BOM-BLR": {"depart": "09:00", "arrive": "10:40", "duration": "1h 40m", "ret_depart": "11:20", "ret_arrive": "13:00", "ret_duration": "1h 40m"},
+    "BLR-BOM": {"depart": "11:20", "arrive": "13:00", "duration": "1h 40m", "ret_depart": "09:00", "ret_arrive": "10:40", "ret_duration": "1h 40m"},
+    "DEL-CCU": {"depart": "06:40", "arrive": "08:55", "duration": "2h 15m", "ret_depart": "09:40", "ret_arrive": "11:55", "ret_duration": "2h 15m"},
+    "CCU-DEL": {"depart": "09:40", "arrive": "11:55", "duration": "2h 15m", "ret_depart": "06:40", "ret_arrive": "08:55", "ret_duration": "2h 15m"},
+    "BLR-HYD": {"depart": "08:10", "arrive": "09:25", "duration": "1h 15m", "ret_depart": "10:05", "ret_arrive": "11:20", "ret_duration": "1h 15m"},
+    "HYD-BLR": {"depart": "10:05", "arrive": "11:20", "duration": "1h 15m", "ret_depart": "08:10", "ret_arrive": "09:25", "ret_duration": "1h 15m"},
+    "MAA-DEL": {"depart": "06:10", "arrive": "09:00", "duration": "2h 50m", "ret_depart": "09:45", "ret_arrive": "12:35", "ret_duration": "2h 50m"},
+    "DEL-MAA": {"depart": "09:45", "arrive": "12:35", "duration": "2h 50m", "ret_depart": "06:10", "ret_arrive": "09:00", "ret_duration": "2h 50m"},
+}
+
+
 @router.get("/fares/route-detail")
-def get_route_detail(route: str = Query("DEL-BOM")):
+def get_route_detail(
+    route: str = "DEL-BOM",
+    depart_date: Optional[str] = None,
+    return_date: Optional[str] = None,
+    passengers: int = 1,
+    cabin: str = "ECONOMY"
+):
     """Returns rich, dynamic flight data for the modern flight tracker UI."""
     store = SnapshotStore()
     df = store.get_dataframe()
@@ -239,9 +262,48 @@ def get_route_detail(route: str = Query("DEL-BOM")):
     orig_city = CITY_NAMES.get(orig, orig)
     dest_city = CITY_NAMES.get(dest, dest)
 
+    today = date.today()
+    # Parse depart_date
+    d_obj = None
+    if depart_date:
+        try:
+            d_obj = datetime.strptime(depart_date.strip(), "%Y-%m-%d").date()
+        except Exception:
+            d_obj = None
+    if not d_obj or d_obj < today:
+        d_obj = today + timedelta(days=7)
+    
+    # Parse return_date
+    r_obj = None
+    if return_date:
+        try:
+            r_obj = datetime.strptime(return_date.strip(), "%Y-%m-%d").date()
+        except Exception:
+            r_obj = None
+    if not r_obj or r_obj < d_obj:
+        r_obj = d_obj + timedelta(days=3)
+
+    depart_str = d_obj.strftime("%Y-%m-%d")
+    return_str = r_obj.strftime("%Y-%m-%d")
+    depart_display = d_obj.strftime("%d %b %Y")
+    return_display = r_obj.strftime("%d %b %Y")
+
+    # Lead-time calculation for matching advance window
+    lead_days = (d_obj - today).days
+    if lead_days <= 2:
+        target_window = "T+1"
+    elif lead_days <= 10:
+        target_window = "T+7"
+    elif lead_days <= 20:
+        target_window = "T+15"
+    elif lead_days <= 35:
+        target_window = "T+30"
+    else:
+        target_window = "T+45"
+
     sub = df[df["route"] == clean_route] if not df.empty else pd.DataFrame()
     if sub.empty:
-        latest_fare = 5842.0
+        base_fare = 5842.0
         lowest_fare = 5640.0
         highest_fare = 7650.0
         latest_flight = "6E-6318"
@@ -250,8 +312,11 @@ def get_route_detail(route: str = Query("DEL-BOM")):
         records_count = 0
         trend_points = []
     else:
-        latest_row = sub.iloc[-1]
-        latest_fare = float(latest_row.get("price_inr", 5842.0))
+        # Match target_window if available, else latest row
+        win_match = sub[sub["window"] == target_window]
+        latest_row = win_match.iloc[-1] if not win_match.empty else sub.iloc[-1]
+
+        base_fare = float(latest_row.get("price_inr", 5842.0))
         lowest_fare = float(sub["price_inr"].min())
         highest_fare = float(sub["price_inr"].max())
         latest_flight = str(latest_row.get("flight_number", "6E-6318"))
@@ -280,21 +345,62 @@ def get_route_detail(route: str = Query("DEL-BOM")):
             date_label = scraped[5:10].replace("-", "/") if len(scraped) >= 10 else f"D-{i+1}"
             trend_points.append({
                 "date": date_label,
-                "price": round(float(r.get("price_inr", latest_fare)), 0),
+                "price": round(float(r.get("price_inr", base_fare)), 0),
                 "flight": str(r.get("flight_number", latest_flight))
             })
 
     if not trend_points:
         dates = ["15 Apr", "18 Apr", "21 Apr", "24 Apr", "27 Apr", "30 Apr", "3 May", "6 May", "9 May", "12 May", "15 May", "Today"]
-        base = latest_fare
         trend_points = [
-            {"date": d, "price": round(base + (len(dates) - idx) * 80 + (idx % 3) * 40 - 150, 0), "flight": latest_flight}
+            {"date": d, "price": round(base_fare + (len(dates) - idx) * 80 + (idx % 3) * 40 - 150, 0), "flight": latest_flight}
             for idx, d in enumerate(dates)
         ]
-        trend_points[-1]["price"] = round(latest_fare, 0)
+        trend_points[-1]["price"] = round(base_fare, 0)
 
-    was_fare = round(latest_fare * 1.14, 0)
+    # Cabin multiplier
+    is_biz = (cabin or "").upper() == "BUSINESS"
+    fare_mult = 2.4 if is_biz else 1.0
+    pax_count = max(1, min(9, int(passengers)))
+    effective_unit_fare = round(base_fare * fare_mult, 0)
+    total_fare = round(effective_unit_fare * pax_count, 0)
+
+    was_fare = round(effective_unit_fare * 1.14, 0)
     drop_pct = round(((highest_fare - lowest_fare) / highest_fare) * 100, 0) if highest_fare > 0 else 28.0
+
+    timing = ROUTE_TIMINGS.get(clean_route, {
+        "depart": "08:20", "arrive": "10:30", "duration": "2h 10m",
+        "ret_depart": "11:25", "ret_arrive": "13:30", "ret_duration": "2h 05m"
+    })
+
+    return_flight_num = f"{latest_code}-675" if latest_code == "6E" else f"{latest_code}-441"
+
+    # OTA deep links with exact searched dates and pax
+    dd_mm_yyyy = d_obj.strftime("%d/%m/%Y")
+    yyyymmdd = d_obj.strftime("%Y%m%d")
+
+    mmt_url = f"https://www.makemytrip.com/flight/search?itinerary={orig}-{dest}-{dd_mm_yyyy}&tripType=O&paxType=A-{pax_count}_C-0_I-0&intl=false&cabinClass={'C' if is_biz else 'E'}"
+    goibibo_url = f"https://www.goibibo.com/flights/air-{orig}-{dest}-{yyyymmdd}--{pax_count}-0-0-{'B' if is_biz else 'E'}-D/"
+    cleartrip_url = f"https://www.cleartrip.com/flights/results?from={orig}&to={dest}&depart_date={dd_mm_yyyy}&adults={pax_count}&childs=0&infants=0&class={'Business' if is_biz else 'Economy'}&airline=&carrier=&intl=n&page=loaded"
+    skyscanner_url = f"https://www.skyscanner.co.in/transport/flights/{orig.lower()}/{dest.lower()}/{d_obj.strftime('%y%m%d')}/"
+    amazon_url = f"https://www.amazon.in/flights?from={orig}&to={dest}"
+
+    # Best time recommendation based on actual lead days
+    if lead_days <= 3:
+        advice_window = "T+1 (Last-minute booking)"
+        advice_recom = f"You are booking {lead_days} day(s) before departure on {clean_route}. Last-minute surge applies; consider booking immediately before fares climb further."
+        advice_pred = "Historical analysis shows non-stop fares peak within 48h of departure."
+    elif lead_days <= 10:
+        advice_window = "T+7 (1-2 weeks advance)"
+        advice_recom = f"Your departure is in {lead_days} days. This corridor ({clean_route}) maintains moderate rates right now, but seats fill quickly."
+        advice_pred = "Prices typically increase by 10-15% in the final 3 days before travel."
+    elif lead_days <= 25:
+        advice_window = "T+15 (Optimal Golden Window)"
+        advice_recom = f"Excellent timing! {clean_route} is at its seasonal sweet spot ({lead_days} days advance). You are receiving optimal non-stop pricing."
+        advice_pred = "Prices are expected to remain stable for 4-5 days before gradual increase."
+    else:
+        advice_window = "T+30+ (Early Bird)"
+        advice_recom = f"Booking {lead_days} days early unlocks early-bird fare classes on {clean_route}. High seat availability across all flights."
+        advice_pred = "Prices are currently at baseline inventory level."
 
     return {
         "route": clean_route,
@@ -302,52 +408,63 @@ def get_route_detail(route: str = Query("DEL-BOM")):
         "origin_city": orig_city,
         "destination": dest,
         "dest_city": dest_city,
+        "depart_date": depart_str,
+        "depart_date_display": depart_display,
+        "return_date": return_str,
+        "return_date_display": return_display,
+        "passengers": pax_count,
+        "cabin": "Business" if is_biz else "Economy",
+        "lead_days": lead_days,
+        "matched_window": target_window,
         "total_records": records_count,
-        "current_lowest_price": round(latest_fare, 0),
+        "current_lowest_price": effective_unit_fare,
+        "total_price": total_fare,
         "was_price": was_fare,
         "discount_pct": 12,
         "flight_depart": {
             "flight_number": latest_flight,
             "airline": latest_airline,
             "airline_code": latest_code,
-            "depart_time": "08:20",
+            "depart_date_display": depart_display,
+            "depart_time": timing["depart"],
             "depart_airport": f"{orig} {orig_city}",
-            "arrival_time": "10:30",
+            "arrival_time": timing["arrive"],
             "arrival_airport": f"{dest} {dest_city}",
-            "duration": "2h 10m",
+            "duration": timing["duration"],
             "type": "Non-stop",
             "verified": True
         },
         "flight_return": {
-            "flight_number": f"{latest_code}-675" if latest_code == "6E" else f"{latest_code}-441",
+            "flight_number": return_flight_num,
             "airline": latest_airline,
             "airline_code": latest_code,
-            "depart_time": "11:25",
+            "return_date_display": return_display,
+            "depart_time": timing["ret_depart"],
             "depart_airport": f"{dest} {dest_city}",
-            "arrival_time": "13:30",
+            "arrival_time": timing["ret_arrive"],
             "arrival_airport": f"{orig} {orig_city}",
-            "duration": "2h 05m",
+            "duration": timing["ret_duration"],
             "type": "Non-stop",
             "verified": True
         },
         "platforms": [
-            {"name": "MakeMyTrip", "price": round(latest_fare, 0), "badge": "Best Deal", "url": "https://www.makemytrip.com", "color": "#eb2227"},
-            {"name": "Goibibo", "price": round(latest_fare + 57, 0), "badge": "", "url": "https://www.goibibo.com", "color": "#f1592a"},
-            {"name": "Cleartrip", "price": round(latest_fare + 278, 0), "badge": "", "url": "https://www.cleartrip.com", "color": "#f77728"},
-            {"name": "Skyscanner", "price": round(latest_fare + 408, 0), "badge": "", "url": "https://www.skyscanner.co.in", "color": "#00a698"},
-            {"name": "Amazon Travel", "price": round(latest_fare + 548, 0), "badge": "", "url": "https://www.amazon.in/flights", "color": "#232f3e"}
+            {"name": "MakeMyTrip", "price": effective_unit_fare, "badge": "Best Deal", "url": mmt_url, "color": "#eb2227"},
+            {"name": "Goibibo", "price": effective_unit_fare + 57, "badge": "", "url": goibibo_url, "color": "#f1592a"},
+            {"name": "Cleartrip", "price": effective_unit_fare + 278, "badge": "", "url": cleartrip_url, "color": "#f77728"},
+            {"name": "Skyscanner", "price": effective_unit_fare + 408, "badge": "", "url": skyscanner_url, "color": "#00a698"},
+            {"name": "Amazon Travel", "price": effective_unit_fare + 548, "badge": "", "url": amazon_url, "color": "#232f3e"}
         ],
         "stats_30d": {
             "highest_price": round(highest_fare, 0),
-            "highest_date": "22 Apr 2025",
+            "highest_date": "Historical Peak",
             "lowest_price": round(lowest_fare, 0),
-            "lowest_date": "12 May 2025",
+            "lowest_date": "Best Recorded",
             "drop_pct": int(drop_pct)
         },
         "trend_30d": trend_points,
         "best_time_to_buy": {
-            "ideal_window": "10 - 20 days before departure",
-            "recommendation": f"For {clean_route}, prices are usually lowest around 10-20 days before your travel date (T+15 advance window).",
-            "prediction": "Prices are expected to increase by 5-10% in the next 7 days due to higher demand."
+            "ideal_window": advice_window,
+            "recommendation": advice_recom,
+            "prediction": advice_pred
         }
     }

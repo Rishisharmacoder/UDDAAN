@@ -18,8 +18,26 @@ import AuditModal from './components/AuditModal';
 import { Sparkles, ShieldCheck } from 'lucide-react';
 
 export default function App() {
+  const getInitialDates = () => {
+    const today = new Date();
+    const d = new Date(today);
+    d.setDate(d.getDate() + 7);
+    const r = new Date(today);
+    r.setDate(r.getDate() + 10);
+    return {
+      depart: d.toISOString().split('T')[0],
+      ret: r.toISOString().split('T')[0]
+    };
+  };
+
+  const initialDates = getInitialDates();
   const [origin, setOrigin] = useState('DEL');
   const [dest, setDest] = useState('BOM');
+  const [departDate, setDepartDate] = useState(initialDates.depart);
+  const [returnDate, setReturnDate] = useState(initialDates.ret);
+  const [passengers, setPassengers] = useState(1);
+  const [cabin, setCabin] = useState('ECONOMY');
+
   const [routeData, setRouteData] = useState(null);
   const [fares, setFares] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -35,9 +53,17 @@ export default function App() {
   const currentRoute = `${origin}-${dest}`;
 
   // Fetch dynamic route intelligence from backend
-  const fetchRouteData = async (routeKey = currentRoute) => {
+  const fetchRouteData = async (
+    routeKey = currentRoute,
+    dDate = departDate,
+    rDate = returnDate,
+    pax = passengers,
+    cab = cabin
+  ) => {
     try {
-      const res = await axios.get(`/api/fares/route-detail?route=${routeKey}`);
+      const res = await axios.get(
+        `/api/fares/route-detail?route=${routeKey}&depart_date=${dDate}&return_date=${rDate}&passengers=${pax}&cabin=${cab}`
+      );
       setRouteData(res.data);
     } catch (err) {
       console.error('Error fetching route detail:', err);
@@ -107,7 +133,7 @@ export default function App() {
   const handleSearch = async () => {
     setLoading(true);
     await Promise.all([
-      fetchRouteData(`${origin}-${dest}`),
+      fetchRouteData(`${origin}-${dest}`, departDate, returnDate, passengers, cabin),
       fetchRecentAudit(auditRoute),
       fetchSummary(),
       fetchIndexData(frequency)
@@ -121,7 +147,7 @@ export default function App() {
     try {
       await axios.post(`/api/scrape/trigger?route=${currentRoute}`);
       await Promise.all([
-        fetchRouteData(currentRoute),
+        fetchRouteData(currentRoute, departDate, returnDate, passengers, cabin),
         fetchRecentAudit(auditRoute),
         fetchSummary(),
         fetchIndexData(frequency),
@@ -138,7 +164,7 @@ export default function App() {
   const handleRefreshAll = async () => {
     setLoading(true);
     await Promise.all([
-      fetchRouteData(`${origin}-${dest}`),
+      fetchRouteData(`${origin}-${dest}`, departDate, returnDate, passengers, cabin),
       fetchRecentAudit(auditRoute),
       fetchSummary(),
       fetchIndexData(frequency),
@@ -161,12 +187,25 @@ export default function App() {
   };
 
   const handleBookNow = (platformName) => {
+    const matchedPlatform = routeData?.platforms?.find(
+      (p) => p.name.toLowerCase() === (platformName || '').toLowerCase()
+    );
+    if (matchedPlatform?.url) {
+      window.open(matchedPlatform.url, '_blank');
+      return;
+    }
+
     const orig = origin;
     const dst = dest;
+    const dStr = departDate || '';
+    const dSlash = dStr.split('-').reverse().join('/');
+    const dCompact = dStr.replace(/-/g, '');
+    const isBiz = cabin === 'BUSINESS';
+
     const urls = {
-      'MakeMyTrip': `https://www.makemytrip.com/flight/search?itinerary=${orig}-${dst}-15/10/2026&tripType=O&paxType=A-1_C-0_I-0&intl=false&cabinClass=E`,
-      'Goibibo': `https://www.goibibo.com/flights/air-${orig}-${dst}-20261015--1-0-0-E-D/`,
-      'Cleartrip': `https://www.cleartrip.com/flights/results?from=${orig}&to=${dst}&depart_date=15/10/2026&adults=1&childs=0&infants=0&class=Economy&airline=&carrier=&intl=n&sd=1727000000000&page=loaded`,
+      'MakeMyTrip': `https://www.makemytrip.com/flight/search?itinerary=${orig}-${dst}-${dSlash}&tripType=O&paxType=A-${passengers}_C-0_I-0&intl=false&cabinClass=${isBiz ? 'C' : 'E'}`,
+      'Goibibo': `https://www.goibibo.com/flights/air-${orig}-${dst}-${dCompact}--${passengers}-0-0-${isBiz ? 'B' : 'E'}-D/`,
+      'Cleartrip': `https://www.cleartrip.com/flights/results?from=${orig}&to=${dst}&depart_date=${dSlash}&adults=${passengers}&childs=0&infants=0&class=${isBiz ? 'Business' : 'Economy'}&airline=&carrier=&intl=n&page=loaded`,
       'Skyscanner': `https://www.skyscanner.co.in/transport/flights/${orig.toLowerCase()}/${dst.toLowerCase()}/`,
       'Amazon Travel': `https://www.amazon.in/flights?from=${orig}&to=${dst}`
     };
@@ -174,21 +213,21 @@ export default function App() {
     window.open(target, '_blank');
   };
 
-  // Auto-fetch on corridor change
+  // Auto-fetch on corridor or date or passenger change
   useEffect(() => {
-    fetchRouteData(`${origin}-${dest}`);
-  }, [origin, dest]);
+    fetchRouteData(`${origin}-${dest}`, departDate, returnDate, passengers, cabin);
+  }, [origin, dest, departDate, returnDate, passengers, cabin]);
 
-  // Initial load
+  // Initial load & periodic background polling
   useEffect(() => {
     handleRefreshAll();
     const interval = setInterval(() => {
-      fetchRouteData(`${origin}-${dest}`);
+      fetchRouteData(`${origin}-${dest}`, departDate, returnDate, passengers, cabin);
       fetchRecentAudit(auditRoute);
       fetchSummary();
     }, 6000);
     return () => clearInterval(interval);
-  }, [origin, dest, auditRoute, frequency]);
+  }, [origin, dest, auditRoute, frequency, departDate, returnDate, passengers, cabin]);
 
   return (
     <div className="page-container">
@@ -209,6 +248,21 @@ export default function App() {
           onOriginChange={setOrigin}
           onDestChange={setDest}
           onSwap={handleSwap}
+          departDate={departDate}
+          onDepartDateChange={(newD) => {
+            setDepartDate(newD);
+            if (newD > returnDate) {
+              const nd = new Date(newD);
+              nd.setDate(nd.getDate() + 3);
+              setReturnDate(nd.toISOString().split('T')[0]);
+            }
+          }}
+          returnDate={returnDate}
+          onReturnDateChange={setReturnDate}
+          passengers={passengers}
+          onPassengersChange={setPassengers}
+          cabin={cabin}
+          onCabinChange={setCabin}
           onSearch={handleSearch}
           loading={loading}
         />

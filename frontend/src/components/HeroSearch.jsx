@@ -16,9 +16,19 @@ export default function HeroSearch({
   onOriginChange,
   onDestChange,
   onSwap,
+  departDate,
+  onDepartDateChange,
+  returnDate,
+  onReturnDateChange,
+  passengers,
+  onPassengersChange,
+  cabin,
+  onCabinChange,
   onSearch,
   loading
 }) {
+  const todayStr = new Date().toISOString().split('T')[0];
+
   return (
     <section className="hero-section" id="flights">
       <div className="hero-backdrop-aircraft" />
@@ -55,7 +65,7 @@ export default function HeroSearch({
           </div>
 
           {/* Swap Button */}
-          <button className="swap-btn" onClick={onSwap} title="Swap Route">
+          <button className="swap-btn" onClick={onSwap} title="Swap Route" aria-label="Swap Route">
             <ArrowLeftRight size={15} />
           </button>
 
@@ -84,10 +94,11 @@ export default function HeroSearch({
             <div className="search-field-content">
               <span className="search-field-label">Departure Date</span>
               <input
-                type="text"
+                type="date"
                 className="search-field-input"
-                defaultValue="15 May 2025"
-                readOnly
+                value={departDate}
+                min={todayStr}
+                onChange={(e) => onDepartDateChange(e.target.value)}
               />
             </div>
           </div>
@@ -98,10 +109,11 @@ export default function HeroSearch({
             <div className="search-field-content">
               <span className="search-field-label">Return Date</span>
               <input
-                type="text"
+                type="date"
                 className="search-field-input"
-                defaultValue="18 May 2025"
-                readOnly
+                value={returnDate}
+                min={departDate || todayStr}
+                onChange={(e) => onReturnDateChange(e.target.value)}
               />
             </div>
           </div>
@@ -110,11 +122,22 @@ export default function HeroSearch({
           <div className="search-field">
             <Users size={18} className="search-field-icon" />
             <div className="search-field-content">
-              <span className="search-field-label">Travellers</span>
-              <select className="search-field-select" defaultValue="1">
-                <option value="1">1 Passenger, Economy</option>
-                <option value="2">2 Passengers, Economy</option>
-                <option value="business">1 Passenger, Business</option>
+              <span className="search-field-label">Travellers & Cabin</span>
+              <select
+                className="search-field-select"
+                value={`${passengers}-${cabin || 'ECONOMY'}`}
+                onChange={(e) => {
+                  const parts = e.target.value.split('-');
+                  onPassengersChange(Number(parts[0]));
+                  if (onCabinChange) onCabinChange(parts[1]);
+                }}
+              >
+                <option value="1-ECONOMY">1 Passenger, Economy</option>
+                <option value="2-ECONOMY">2 Passengers, Economy</option>
+                <option value="3-ECONOMY">3 Passengers, Economy</option>
+                <option value="4-ECONOMY">4 Passengers, Economy</option>
+                <option value="1-BUSINESS">1 Passenger, Business</option>
+                <option value="2-BUSINESS">2 Passengers, Business</option>
               </select>
             </div>
           </div>
